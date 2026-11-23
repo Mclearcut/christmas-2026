@@ -5,7 +5,7 @@
  */
 
 // The planner Sheet (menu, schedule, shopping). Presents is this Sheet itself.
-const PLANNER_ID = '14jvc-Y0rmS42duvmg6XdMX5ownfdDqDIoQlLDTgXcqg';
+const PLANNER_ID = 'PASTE_PLANNER_SHEET_ID_HERE';
 
 function doGet() {
   return json_(readAll_());
