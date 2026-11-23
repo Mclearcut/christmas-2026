@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Christmas 2026</title>
+<meta name="theme-color" content="#1F4D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#FBF6EE;--paper:#FFFDF9;--green:#1F4D3A;--green2:#2E6B52;--red:#B3261E;--gold:#C9A227;--ink:#2A2620;--muted:#7A7064;--line:#EADFCC;--taken:#E6F1EA}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;padding-bottom:90px}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif;margin:0}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+header.hero{background:var(--green);color:#fff;padding:28px 0 26px;position:relative;overflow:hidden}
+header.hero:after{content:"";position:absolute;inset:auto -40px -60px auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.35),transparent 70%)}
+.hero small{letter-spacing:.14em;text-transform:uppercase;color:#E9D9A6;font-size:12px}
+.hero h1{font-size:34px;margin-top:4px}
+.hero p{margin:8px 0 0;opacity:.9;max-width:460px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:-18px 0 20px;position:relative}
+.tile{background:var(--paper);border-radius:16px;padding:14px 12px;box-shadow:0 6px 18px rgba(60,40,10,.08);text-align:center}
+.tile b{display:block;font-family:"Playfair Display",serif;font-size:28px;color:var(--red);line-height:1.1}
+.tile span{font-size:12px;color:var(--muted)}
+section.view{display:none}section.view.on{display:block}
+.sec-title{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 10px}
+.sec-title h2{font-size:22px;color:var(--green)}
+.sec-title span{color:var(--muted);font-size:13px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 2px 8px rgba(60,40,10,.04)}
+.card .body{flex:1;min-width:0}
+.card h3{font-family:Inter,sans-serif;font-size:16px;font-weight:600}
+.meta{font-size:13px;color:var(--muted);margin-top:2px}
+.size{display:inline-block;background:#F6EBD3;color:#6B5420;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:500;margin-top:6px}
+.card.taken{background:var(--taken);border-color:#CFE3D6}
+.card.taken h3{color:#4F6E5B}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--green2);margin-top:6px}
+.needs{display:inline-block;background:#FBE3E1;color:var(--red);border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;margin-top:6px}
+button{font:inherit;cursor:pointer;border:0}
+.btn{background:var(--green);color:#fff;border-radius:12px;padding:10px 14px;font-weight:600;font-size:14px;white-space:nowrap;min-height:44px}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.red{background:var(--red)}
+.filters{display:flex;gap:8px;margin:14px 0 4px;overflow-x:auto}
+.chip{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px;color:var(--ink)}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+.cat{font-family:"Playfair Display",serif;font-size:18px;color:var(--red);margin:20px 0 8px}
+.timeline{border-left:2px solid var(--gold);margin:18px 0 0 8px;padding-left:20px}
+.ev{position:relative;margin-bottom:18px}
+.ev:before{content:"";position:absolute;left:-27px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--paper);border:3px solid var(--red)}
+.ev .when{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.ev .what{font-weight:600}
+.santa{background:linear-gradient(135deg,var(--red),#8E1C16);color:#fff;border-radius:18px;padding:18px;margin:18px 0}
+.santa h2{font-size:22px}.santa p{margin:6px 0 12px;opacity:.92}
+.santa .btn{background:#fff;color:var(--red)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav.tabs button{flex:1;background:none;padding:8px 4px;border-radius:12px;color:var(--muted);font-size:12px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs button .ic{font-size:20px;line-height:1}
+nav.tabs button.on{color:var(--green);background:#EFF5F1}
+dialog{border:0;border-radius:20px;padding:22px;max-width:380px;width:calc(100% - 36px);background:var(--paper);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(31,77,58,.45)}
+dialog h3{font-size:20px;color:var(--green);margin-bottom:6px}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+input,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+.demo{background:#FFF3CD;color:#6B5420;font-size:13px;text-align:center;padding:6px}
+.fab{position:fixed;right:18px;bottom:88px;z-index:4;box-shadow:0 8px 20px rgba(31,77,58,.35);border-radius:999px;padding:12px 18px}
+.empty{color:var(--muted);text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<div id="demo" class="demo" hidden>Preview mode: changes are not saved yet</div>
+<header class="hero"><div class="wrap">
+  <small>Thursday 24 to Monday 28 December</small>
+  <h1>Christmas 2026</h1>
+  <p>Everything for Christmas in one place. Pick what you're buying or bringing and your name goes on it.</p>
+</div></header>
+
+<main class="wrap">
+  <div class="tiles">
+    <div class="tile"><b id="t-days">0</b><span>days to go</span></div>
+    <div class="tile"><b id="t-gifts">0</b><span>gifts still free</span></div>
+    <div class="tile"><b id="t-food">0</b><span>food and bits need someone</span></div>
+  </div>
+
+  <section class="view on" id="v-home">
+    <div class="santa">
+      <h2>Secret Santa</h2>
+      <p>Adults only. Budget £30. Add your name and a few hints, and names get drawn once everyone is in.</p>
+      <button class="btn" onclick="openSanta()">I'm in</button>
+      <div id="santa-count" style="margin-top:10px;font-size:13px;opacity:.9"></div>
+    </div>
+    <div class="sec-title"><h2>Coming up</h2><span>Full plan in Plan</span></div>
+    <div id="home-next"></div>
+  </section>
+
+  <section class="view" id="v-wish">
+    <div class="sec-title"><h2>The boys' wishlist</h2><span id="wish-count"></span></div>
+    <div class="meta">Sizes are a guide. Stocking fillers are welcome too.</div>
+    <div class="filters" id="wish-filters">
+      <button class="chip on" data-f="all">All</button>
+      <button class="chip" data-f="free">Still free</button>
+      <button class="chip" data-f="taken">Taken</button>
+    </div>
+    <div id="wish-list"></div>
+  </section>
+
+  <section class="view" id="v-food">
+    <div class="sec-title"><h2>Christmas Day menu</h2><span id="food-count"></span></div>
+    <div id="menu-list"></div>
+    <div class="sec-title"><h2>Bring along</h2></div>
+    <div id="bring-list"></div>
+  </section>
+
+  <section class="view" id="v-plan">
+    <div class="sec-title"><h2>The plan</h2></div>
+    <div class="timeline" id="plan-list"></div>
+  </section>
+</main>
+
+<button class="btn red fab" id="fab" hidden onclick="openSuggest()">+ Suggest a gift</button>
+
+<nav class="tabs">
+  <button class="on" data-v="home"><span class="ic">★</span>Home</button>
+  <button data-v="wish"><span class="ic">🎁</span>Wishlist</button>
+  <button data-v="food"><span class="ic">🍽</span>Food</button>
+  <button data-v="plan"><span class="ic">🗓</span>Plan</button>
+</nav>
+
+<dialog id="dlg"><form method="dialog" id="dlg-form"></form></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+// Paste the Apps Script web app URL here. Empty = preview mode with sample data.
+const API_URL = "";
+const DEMO = {"wishlist":[],"menu":[],"schedule":[],"bring":[],"santa":[]};
+
+let data = null, filter = "all";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const free = v => { v = String(v || "").trim(); return v === "" || v.toUpperCase() === "TBC"; };
+const myName = () => { try { return localStorage.getItem("xmasName") || ""; } catch (e) { return ""; } };
+const setName = n => { try { localStorage.setItem("xmasName", n); } catch (e) {} };
+const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("on"); setTimeout(() => t.classList.remove("on"), 2600); };
+
+async function load() {
+  if (!API_URL) { $("#demo").hidden = false; data = JSON.parse(JSON.stringify(DEMO)); render(); return; }
+  try {
+    const r = await fetch(API_URL); data = await r.json(); render();
+  } catch (e) { toast("Couldn't load the list, please refresh"); }
+}
+
+async function send(payload) {
+  if (!API_URL) { demoApply(payload); render(); return { ok: true }; }
+  const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+  const res = await r.json();
+  if (res.data) { data = res.data; render(); }
+  return res;
+}
+
+function demoApply(p) {
+  const list = p.list === "wishlist" ? data.wishlist : p.list === "menu" ? data.menu : data.bring;
+  const key = p.list === "wishlist" ? "by" : p.list === "menu" ? "buys" : "who";
+  const it = list && list.find(x => x.row === p.row);
+  if (p.action === "claim") it[key] = p.name;
+  if (p.action === "unclaim") it[key] = p.list === "wishlist" ? "" : "TBC";
+  if (p.action === "suggest") data.wishlist.push({ row: Date.now(), category: "Suggested", item: p.item, size: p.size || "", notes: "Suggested by " + p.name + (p.notes ? ". " + p.notes : ""), by: "" });
+  if (p.action === "santa" && !data.santa.some(s => s.name.toLowerCase() === p.name.toLowerCase())) data.santa.push({ name: p.name });
+}
+
+function claimBtn(list, row, label, who) {
+  const mine = who && who.trim().toLowerCase() === myName().toLowerCase();
+  if (free(who)) return `<button class="btn" onclick="claim('${list}',${row},this)" data-label="${esc(label)}">I'll get this</button>`;
+  if (mine) return `<button class="btn ghost" onclick="unclaim('${list}',${row},this)" data-label="${esc(label)}">Undo</button>`;
+  return "";
+}
+
+function render() {
+  const days = Math.max(0, Math.ceil((new Date(2026, 11, 25) - new Date()) / 864e5));
+  $("#t-days").textContent = days;
+  const gFree = data.wishlist.filter(w => free(w.by)).length;
+  $("#t-gifts").textContent = gFree;
+  const fFree = data.menu.filter(m => free(m.buys)).length + data.bring.filter(b => free(b.who)).length;
+  $("#t-food").textContent = fFree;
+  $("#santa-count").textContent = data.santa.length ? `${data.santa.length} in so far: ${data.santa.map(s => s.name).join(", ")}` : "";
+
+  // wishlist
+  $("#wish-count").textContent = `${data.wishlist.length - gFree} of ${data.wishlist.length} taken`;
+  let html = "", cats = [...new Set(data.wishlist.map(w => w.category))];
+  cats.forEach(c => {
+    let items = data.wishlist.filter(w => w.category === c)
+      .filter(w => filter === "all" || (filter === "free") === free(w.by))
+      .sort((a, b) => free(b.by) - free(a.by));
+    if (!items.length) return;
+    html += `<div class="cat">${esc(c)}</div>`;
+    items.forEach(w => {
+      html += `<div class="card ${free(w.by) ? "" : "taken"}"><div class="body"><h3>${esc(w.item)}</h3>
+        ${w.notes ? `<div class="meta">${esc(w.notes)}</div>` : ""}
+        ${w.size ? `<span class="size">Size ${esc(w.size)}</span>` : ""}
+        ${free(w.by) ? "" : `<div class="badge">✓ Taken by ${esc(w.by)}</div>`}</div>
+        ${claimBtn("wishlist", w.row, w.item, w.by)}</div>`;
+    });
+  });
+  $("#wish-list").innerHTML = html || `<div class="empty">Nothing here</div>`;
+
+  // menu
+  $("#food-count").textContent = `${data.menu.length} dishes`;
+  html = ""; [...new Set(data.menu.map(m => m.course))].forEach(c => {
+    html += `<div class="cat">${esc(c)}</div>`;
+    data.menu.filter(m => m.course === c).forEach(m => {
+      const f = free(m.buys);
+      const who = [m.buys && !f ? m.buys : "", m.cooks && m.cooks !== "TBC" && m.cooks !== m.buys ? "Cooking: " + m.cooks : ""].filter(Boolean).join(" · ");
+      html += `<div class="card"><div class="body"><h3>${esc(m.dish)}</h3>
+        ${who ? `<div class="meta">${esc(who)}</div>` : ""}${m.notes ? `<div class="meta">${esc(m.notes)}</div>` : ""}
+        ${f ? `<span class="needs">Needs someone</span>` : ""}</div>${claimBtn("menu", m.row, m.dish, m.buys)}</div>`;
+    });
+  });
+  $("#menu-list").innerHTML = html;
+  $("#bring-list").innerHTML = data.bring.map(b => `<div class="card ${free(b.who) ? "" : "taken"}"><div class="body"><h3>${esc(b.item)}${b.qty > 1 ? " ×" + esc(b.qty) : ""}</h3>
+    ${free(b.who) ? `<span class="needs">Needs someone</span>` : `<div class="badge">✓ ${esc(b.who)}</div>`}</div>${claimBtn("bring", b.row, b.item, b.who)}</div>`).join("");
+
+  // plan
+  const ev = s => `<div class="ev"><div class="when">${esc(s.day)}${s.when ? " · " + esc(s.when) : ""}</div><div class="what">${esc(s.what)}</div>${s.notes ? `<div class="meta">${esc(s.notes)}</div>` : ""}</div>`;
+  $("#plan-list").innerHTML = data.schedule.map(ev).join("");
+  $("#home-next").innerHTML = `<div class="timeline">${data.schedule.slice(0, 3).map(ev).join("")}</div>`;
+}
+
+function askName(title, extra, onOk) {
+  const f = $("#dlg-form");
+  f.innerHTML = `<h3>${title}</h3>${extra.intro || ""}<label>Your first name</label><input id="f-name" value="${esc(myName())}" required maxlength="40">${extra.fields || ""}
+    <div class="row"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="ok">${extra.ok || "Confirm"}</button></div>`;
+  const d = $("#dlg"); d.showModal();
+  d.onclose = async () => {
+    if (d.returnValue !== "ok") return;
+    const n = $("#f-name").value.trim(); if (!n) return;
+    setName(n); await onOk(n);
+  };
+}
+
+function claim(list, row, el) {
+  const label = el.dataset.label;
+  askName(`Taking: ${esc(label)}`, { ok: "It's mine" }, async name => {
+    const r = await send({ action: "claim", list, row, label, name });
+    toast(r.ok ? "Done, it's yours" : r.error);
+  });
+}
+async function unclaim(list, row, el) {
+  const r = await send({ action: "unclaim", list, row, label: el.dataset.label, name: myName() });
+  toast(r.ok ? "Removed your name" : r.error);
+}
+function openSuggest() {
+  askName("Suggest a gift", { ok: "Add it", fields: `<label>Gift</label><input id="f-item" required maxlength="80"><label>Size (if clothes or shoes)</label><input id="f-size" maxlength="40"><label>Notes or link</label><input id="f-notes" maxlength="200">` },
+    async name => { const r = await send({ action: "suggest", name, item: $("#f-item").value, size: $("#f-size").value, notes: $("#f-notes").value }); toast(r.ok ? "Added to the list" : r.error); });
+}
+function openSanta() {
+  askName("Secret Santa", { ok: "I'm in", intro: `<div class="meta">Adults only, £30 budget.</div>`, fields: `<label>A few hints for your Santa</label><textarea id="f-hints" rows="3" maxlength="300" placeholder="Likes, sizes, things to avoid"></textarea>` },
+    async name => { const r = await send({ action: "santa", name, hints: $("#f-hints").value }); toast(r.ok ? "You're in" : r.error); });
+}
+
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("section.view").forEach(s => s.classList.toggle("on", s.id === "v-" + b.dataset.v));
+  $("#fab").hidden = b.dataset.v !== "wish"; window.scrollTo(0, 0);
+});
+document.querySelectorAll("#wish-filters .chip").forEach(c => c.onclick = () => {
+  filter = c.dataset.f; document.querySelectorAll("#wish-filters .chip").forEach(x => x.classList.toggle("on", x === c)); render();
+});
+load();
+if (API_URL) setInterval(load, 60000);
+</script>
+</body>
+</html>
