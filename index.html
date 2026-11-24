@@ -49,9 +49,6 @@ button{font:inherit;cursor:pointer;border:0}
 .ev:before{content:"";position:absolute;left:-27px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--paper);border:3px solid var(--red)}
 .ev .when{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
 .ev .what{font-weight:600}
-.santa{background:linear-gradient(135deg,var(--red),#8E1C16);color:#fff;border-radius:18px;padding:18px;margin:18px 0}
-.santa h2{font-size:22px}.santa p{margin:6px 0 12px;opacity:.92}
-.santa .btn{background:#fff;color:var(--red)}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5}
 nav.tabs button{flex:1;background:none;padding:8px 4px;border-radius:12px;color:var(--muted);font-size:12px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:2px}
 nav.tabs button .ic{font-size:20px;line-height:1}
@@ -85,12 +82,6 @@ input,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--
   </div>
 
   <section class="view on" id="v-home">
-    <div class="santa">
-      <h2>Secret Santa</h2>
-      <p>Adults only. Budget £30. Add your name and a few hints, and names get drawn once everyone is in.</p>
-      <button class="btn" onclick="openSanta()">I'm in</button>
-      <div id="santa-count" style="margin-top:10px;font-size:13px;opacity:.9"></div>
-    </div>
     <div class="sec-title"><h2>Coming up</h2><span>Full plan in Plan</span></div>
     <div id="home-next"></div>
   </section>
@@ -134,7 +125,7 @@ input,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--
 <script>
 // Paste the Apps Script web app URL here. Empty = preview mode with sample data.
 const API_URL = "https://script.google.com/macros/s/AKfycbyzGafNAz7gtOZTQdklr9p0qvc17mcg__lBgwBW3OgUE8nNC9wQhFJO8PbwDKEzI78T/exec";
-const DEMO = {"wishlist":[],"menu":[],"schedule":[],"bring":[],"santa":[]};
+const DEMO = {"wishlist":[],"menu":[],"schedule":[],"bring":[]};
 
 let data = null, filter = "all";
 const $ = s => document.querySelector(s);
@@ -166,7 +157,6 @@ function demoApply(p) {
   if (p.action === "claim") it[key] = p.name;
   if (p.action === "unclaim") it[key] = p.list === "wishlist" ? "" : "TBC";
   if (p.action === "suggest") data.wishlist.push({ row: Date.now(), category: "Suggested", item: p.item, size: p.size || "", notes: "Suggested by " + p.name + (p.notes ? ". " + p.notes : ""), by: "" });
-  if (p.action === "santa" && !data.santa.some(s => s.name.toLowerCase() === p.name.toLowerCase())) data.santa.push({ name: p.name });
 }
 
 function claimBtn(list, row, label, who) {
@@ -183,7 +173,6 @@ function render() {
   $("#t-gifts").textContent = gFree;
   const fFree = data.menu.filter(m => free(m.buys)).length + data.bring.filter(b => free(b.who)).length;
   $("#t-food").textContent = fFree;
-  $("#santa-count").textContent = data.santa.length ? `${data.santa.length} in so far: ${data.santa.map(s => s.name).join(", ")}` : "";
 
   // wishlist
   $("#wish-count").textContent = `${data.wishlist.length - gFree} of ${data.wishlist.length} taken`;
@@ -252,10 +241,6 @@ async function unclaim(list, row, el) {
 function openSuggest() {
   askName("Suggest a gift", { ok: "Add it", fields: `<label>Gift</label><input id="f-item" required maxlength="80"><label>Size (if clothes or shoes)</label><input id="f-size" maxlength="40"><label>Notes or link</label><input id="f-notes" maxlength="200">` },
     async name => { const r = await send({ action: "suggest", name, item: $("#f-item").value, size: $("#f-size").value, notes: $("#f-notes").value }); toast(r.ok ? "Added to the list" : r.error); });
-}
-function openSanta() {
-  askName("Secret Santa", { ok: "I'm in", intro: `<div class="meta">Adults only, £30 budget.</div>`, fields: `<label>A few hints for your Santa</label><textarea id="f-hints" rows="3" maxlength="300" placeholder="Likes, sizes, things to avoid"></textarea>` },
-    async name => { const r = await send({ action: "santa", name, hints: $("#f-hints").value }); toast(r.ok ? "You're in" : r.error); });
 }
 
 document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => {

@@ -34,7 +34,6 @@ function doPost(e) {
     if (req.action === 'claim') result = claim_(req, name);
     else if (req.action === 'unclaim') result = unclaim_(req, name);
     else if (req.action === 'suggest') result = suggest_(req, name);
-    else if (req.action === 'santa') result = santa_(req, name);
     else result = { ok: false, error: 'Unknown action' };
     result.data = readAll_();
     return json_(result);
@@ -90,35 +89,12 @@ function suggest_(req, name) {
   return { ok: true };
 }
 
-function santa_(req, name) {
-  if (!name) return { ok: false, error: 'Please add your name' };
-  const sh = tab_(presents_(), 'Secret Santa');
-  const values = sh.getRange(5, 1, Math.max(sh.getLastRow() - 4, 1), 3).getValues();
-  const hints = String(req.hints || '').slice(0, 300);
-  for (let i = 0; i < values.length; i++) {
-    if (String(values[i][0]).trim().toLowerCase() === name.toLowerCase()) {
-      sh.getRange(5 + i, 2, 1, 2).setValues([[hints, 'Yes']]);
-      return { ok: true };
-    }
-  }
-  for (let i = 0; i < values.length; i++) {
-    if (String(values[i][0]).trim() === '') {
-      sh.getRange(5 + i, 1, 1, 3).setValues([[name, hints, 'Yes']]);
-      return { ok: true };
-    }
-  }
-  sh.appendRow([name, hints, 'Yes']);
-  return { ok: true };
-}
-
 function readAll_() {
   const presents = presents_();
   const planner = planner_();
   const wishlist = rows_(tab_(presents, "Boys' wishlist"), 5, 6)
     .filter(r => r.v[1] && !String(r.v[1]).startsWith('Add your own'))
     .map(r => ({ row: r.row, category: r.v[0], item: r.v[1], size: r.v[2], notes: r.v[3], by: r.v[4] }));
-  const santa = rows_(tab_(presents, 'Secret Santa'), 5, 3)
-    .filter(r => r.v[0]).map(r => ({ name: r.v[0] }));
   const menu = rows_(tab_(planner, 'Menu'), 4, 5)
     .filter(r => r.v[1]).map(r => ({ row: r.row, course: r.v[0], dish: r.v[1], buys: r.v[2], cooks: r.v[3], notes: r.v[4] }));
   const schedule = rows_(tab_(planner, 'Schedule'), 4, 4)
@@ -126,7 +102,7 @@ function readAll_() {
   const bring = rows_(tab_(planner, 'Shopping'), 5, 5)
     .filter(r => r.v[0] === 'Activities' || r.v[0] === 'Other')
     .map(r => ({ row: r.row, item: r.v[1], qty: r.v[2], who: r.v[4] }));
-  return { wishlist, menu, schedule, bring, santa };
+  return { wishlist, menu, schedule, bring };
 }
 
 function rows_(sheet, firstRow, cols) {
