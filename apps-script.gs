@@ -4,11 +4,24 @@
  * Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
  */
 
-// The planner Sheet (menu, schedule, shopping). Presents is this Sheet itself.
+// The two Christmas Sheets. Works wherever this script is pasted.
 const PLANNER_ID = 'PASTE_PLANNER_SHEET_ID_HERE';
+const PRESENTS_ID = 'PASTE_PRESENTS_SHEET_ID_HERE';
+
+function presents_() { return SpreadsheetApp.openById(PRESENTS_ID); }
+function planner_() { return SpreadsheetApp.openById(PLANNER_ID); }
+
+// Finds a tab even if the apostrophe or capitals differ, and says which tabs exist if not.
+function tab_(ss, name) {
+  const norm = s => s.toLowerCase().replace(/[\u2018\u2019']/g, '').replace(/\s+/g, ' ').trim();
+  const found = ss.getSheets().find(sh => norm(sh.getName()) === norm(name));
+  if (!found) throw new Error('Tab "' + name + '" not found in "' + ss.getName() + '". Tabs: ' + ss.getSheets().map(sh => sh.getName()).join(', '));
+  return found;
+}
 
 function doGet() {
-  return json_(readAll_());
+  try { return json_(readAll_()); }
+  catch (err) { return json_({ ok: false, error: String(err) }); }
 }
 
 function doPost(e) {
@@ -34,11 +47,11 @@ function doPost(e) {
 
 // Where each list lives: sheet, first data row, column holding the label, column holding the claimer.
 function target_(list) {
-  const presents = SpreadsheetApp.getActiveSpreadsheet();
-  const planner = SpreadsheetApp.openById(PLANNER_ID);
-  if (list === 'wishlist') return { sheet: presents.getSheetByName("Boys' wishlist"), labelCol: 2, nameCol: 5 };
-  if (list === 'menu') return { sheet: planner.getSheetByName('Menu'), labelCol: 2, nameCol: 3 };
-  if (list === 'bring') return { sheet: planner.getSheetByName('Shopping'), labelCol: 2, nameCol: 5 };
+  const presents = presents_();
+  const planner = planner_();
+  if (list === 'wishlist') return { sheet: tab_(presents, "Boys' wishlist"), labelCol: 2, nameCol: 5 };
+  if (list === 'menu') return { sheet: tab_(planner, 'Menu'), labelCol: 2, nameCol: 3 };
+  if (list === 'bring') return { sheet: tab_(planner, 'Shopping'), labelCol: 2, nameCol: 5 };
   throw new Error('Unknown list');
 }
 
@@ -70,7 +83,7 @@ function unclaim_(req, name) {
 
 function suggest_(req, name) {
   if (!name) return { ok: false, error: 'Please add your name' };
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Boys' wishlist");
+  const sh = tab_(presents_(), "Boys' wishlist");
   const item = String(req.item || '').trim().slice(0, 80);
   if (!item) return { ok: false, error: 'Please add the gift' };
   sh.appendRow(['Suggested', item, String(req.size || '').slice(0, 40), 'Suggested by ' + name + (req.notes ? '. ' + String(req.notes).slice(0, 200) : ''), '', '']);
@@ -79,7 +92,7 @@ function suggest_(req, name) {
 
 function santa_(req, name) {
   if (!name) return { ok: false, error: 'Please add your name' };
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Secret Santa');
+  const sh = tab_(presents_(), 'Secret Santa');
   const values = sh.getRange(5, 1, Math.max(sh.getLastRow() - 4, 1), 3).getValues();
   const hints = String(req.hints || '').slice(0, 300);
   for (let i = 0; i < values.length; i++) {
@@ -99,18 +112,18 @@ function santa_(req, name) {
 }
 
 function readAll_() {
-  const presents = SpreadsheetApp.getActiveSpreadsheet();
-  const planner = SpreadsheetApp.openById(PLANNER_ID);
-  const wishlist = rows_(presents.getSheetByName("Boys' wishlist"), 5, 6)
+  const presents = presents_();
+  const planner = planner_();
+  const wishlist = rows_(tab_(presents, "Boys' wishlist"), 5, 6)
     .filter(r => r.v[1] && !String(r.v[1]).startsWith('Add your own'))
     .map(r => ({ row: r.row, category: r.v[0], item: r.v[1], size: r.v[2], notes: r.v[3], by: r.v[4] }));
-  const santa = rows_(presents.getSheetByName('Secret Santa'), 5, 3)
+  const santa = rows_(tab_(presents, 'Secret Santa'), 5, 3)
     .filter(r => r.v[0]).map(r => ({ name: r.v[0] }));
-  const menu = rows_(planner.getSheetByName('Menu'), 4, 5)
+  const menu = rows_(tab_(planner, 'Menu'), 4, 5)
     .filter(r => r.v[1]).map(r => ({ row: r.row, course: r.v[0], dish: r.v[1], buys: r.v[2], cooks: r.v[3], notes: r.v[4] }));
-  const schedule = rows_(planner.getSheetByName('Schedule'), 4, 4)
+  const schedule = rows_(tab_(planner, 'Schedule'), 4, 4)
     .filter(r => r.v[0]).map(r => ({ day: r.v[0], when: r.v[1], what: r.v[2], notes: r.v[3] }));
-  const bring = rows_(planner.getSheetByName('Shopping'), 5, 5)
+  const bring = rows_(tab_(planner, 'Shopping'), 5, 5)
     .filter(r => r.v[0] === 'Activities' || r.v[0] === 'Other')
     .map(r => ({ row: r.row, item: r.v[1], qty: r.v[2], who: r.v[4] }));
   return { wishlist, menu, schedule, bring, santa };
