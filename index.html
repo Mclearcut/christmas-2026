@@ -64,47 +64,58 @@ input,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--
 .demo{background:#FFF3CD;color:#6B5420;font-size:13px;text-align:center;padding:6px}
 .fab{position:fixed;right:18px;bottom:88px;z-index:4;box-shadow:0 8px 20px rgba(31,77,58,.35);border-radius:999px;padding:12px 18px}
 .empty{color:var(--muted);text-align:center;padding:24px}
+.price{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;font-weight:600;color:var(--green);text-decoration:none;border:1px solid #CFE3D6;background:#F3F8F5;border-radius:999px;padding:4px 11px}
+.price:hover{background:#E6F1EA}
+.progress{font-size:12px;font-weight:600;color:var(--muted);margin-top:6px}
+.btns{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.btn.small{min-height:36px;padding:7px 11px;font-size:13px}
+.btn.done{background:#E6F1EA;color:var(--green2);border:1px solid #CFE3D6}
+.money{background:linear-gradient(135deg,#FFF8E6,#FBF1D6);border-color:#EED9A0}
+.friends nav.tabs,.friends .only-family{display:none}
+.friends body,.friends{padding-bottom:20px}
 </style>
 </head>
 <body>
 <div id="demo" class="demo" hidden>Preview mode: changes are not saved yet</div>
 <header class="hero"><div class="wrap">
-  <small>Thursday 24 to Monday 28 December</small>
-  <h1>Christmas 2026</h1>
-  <p>Everything for Christmas in one place. Pick what you're buying or bringing and your name goes on it.</p>
+  <small id="hero-dates">Thursday 24 to Monday 28 December</small>
+  <h1 id="hero-title">Christmas 2026</h1>
+  <p id="hero-text">Everything for Christmas in one place. Pick what you're buying or bringing and your name goes on it.</p>
 </div></header>
 
 <main class="wrap">
   <div class="tiles">
     <div class="tile"><b id="t-days">…</b><span>days to go</span></div>
     <div class="tile"><b id="t-gifts">…</b><span>gifts still free</span></div>
-    <div class="tile"><b id="t-food">…</b><span>food and bits need someone</span></div>
+    <div class="tile only-family"><b id="t-food">…</b><span>food and bits need someone</span></div>
+    <div class="tile friends-only" hidden><b id="t-taken">…</b><span>gifts taken</span></div>
   </div>
 
-  <section class="view on" id="v-home">
+  <section class="view on only-family" id="v-home">
     <div class="sec-title"><h2>Coming up</h2><span>Full plan in Plan</span></div>
     <div id="home-next"></div>
   </section>
 
   <section class="view" id="v-wish">
     <div class="sec-title"><h2>The boys' wishlist</h2><span id="wish-count"></span></div>
-    <div class="meta">Sizes are a guide. Stocking fillers are welcome too.</div>
+    <div class="meta">They're twins, so clothes and shoes are needed in twos. Links are just examples, buy wherever you like. Stocking fillers welcome too.</div>
     <div class="filters" id="wish-filters">
       <button class="chip on" data-f="all">All</button>
       <button class="chip" data-f="free">Still free</button>
       <button class="chip" data-f="taken">Taken</button>
+      <button class="chip" data-f="mine">Mine</button>
     </div>
     <div id="wish-list"></div>
   </section>
 
-  <section class="view" id="v-food">
+  <section class="view only-family" id="v-food">
     <div class="sec-title"><h2>Christmas Day menu</h2><span id="food-count"></span></div>
     <div id="menu-list"></div>
     <div class="sec-title"><h2>Bring along</h2></div>
     <div id="bring-list"></div>
   </section>
 
-  <section class="view" id="v-plan">
+  <section class="view only-family" id="v-plan">
     <div class="sec-title"><h2>The plan</h2></div>
     <div class="timeline" id="plan-list"></div>
   </section>
@@ -123,134 +134,173 @@ input,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--
 <div class="toast" id="toast"></div>
 
 <script>
-// Paste the Apps Script web app URL here. Empty = preview mode with sample data.
 const API_URL = "https://script.google.com/macros/s/AKfycbyzGafNAz7gtOZTQdklr9p0qvc17mcg__lBgwBW3OgUE8nNC9wQhFJO8PbwDKEzI78T/exec";
-const DEMO = {"wishlist":[],"menu":[],"schedule":[],"bring":[]};
+const FRIENDS = new URLSearchParams(location.search).get("view") === "gifts";
+const CACHE_KEY = "xmasData_v2";
 
 let data = null, filter = "all";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const free = v => { v = String(v || "").trim(); return v === "" || v.toUpperCase() === "TBC"; };
-const myName = () => { try { return localStorage.getItem("xmasName") || ""; } catch (e) { return ""; } };
-const setName = n => { try { localStorage.setItem("xmasName", n); } catch (e) {} };
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const myName = () => store.get("xmasName") || "";
+const isMe = n => myName() && String(n).trim().toLowerCase() === myName().trim().toLowerCase();
 const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("on"); setTimeout(() => t.classList.remove("on"), 2600); };
+const safeLink = u => /^https?:\/\//i.test(String(u || "")) ? u : "";
+const money = p => { const n = Number(String(p).replace(/[£,]/g, "")); return n ? "£" + (n % 1 ? n.toFixed(2) : n) : ""; };
+
+function setData(d) { data = d; store.set(CACHE_KEY, JSON.stringify(d)); render(); }
 
 async function load() {
-  if (!API_URL) { $("#demo").hidden = false; data = JSON.parse(JSON.stringify(DEMO)); render(); return; }
+  if (!API_URL) { $("#demo").hidden = false; return; }
   try {
-    const r = await fetch(API_URL); const d = await r.json(); if (!d.wishlist) { toast(d.error || "Couldn't load the list"); return; } data = d; render();
-  } catch (e) { toast("Couldn't load the list, please refresh"); }
+    const r = await fetch(API_URL); const d = await r.json();
+    if (!d.wishlist) { toast(d.error || "Couldn't load the list"); return; }
+    setData(d);
+  } catch (e) { if (!data) toast("Couldn't load the list, please refresh"); }
 }
 
 async function send(payload) {
-  if (!API_URL) { demoApply(payload); render(); return { ok: true }; }
   const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
   const res = await r.json();
-  if (res.data) { data = res.data; render(); }
+  if (res.data) setData(res.data);
   return res;
 }
 
-function demoApply(p) {
-  const list = p.list === "wishlist" ? data.wishlist : p.list === "menu" ? data.menu : data.bring;
-  const key = p.list === "wishlist" ? "by" : p.list === "menu" ? "buys" : "who";
-  const it = list && list.find(x => x.row === p.row);
-  if (p.action === "claim") it[key] = p.name;
-  if (p.action === "unclaim") it[key] = p.list === "wishlist" ? "" : "TBC";
-  if (p.action === "suggest") data.wishlist.push({ row: Date.now(), category: "Suggested", item: p.item, size: p.size || "", notes: "Suggested by " + p.name + (p.notes ? ". " + p.notes : ""), by: "" });
+const wishFree = w => w.type !== "money" && w.claims.length < w.qty;
+
+function wishCard(w) {
+  const isMoney = w.type === "money";
+  const names = w.claims.map(c => c.name);
+  const mine = w.claims.filter(c => isMe(c.name));
+  const full = !isMoney && w.claims.length >= w.qty;
+  const link = safeLink(w.link), price = money(w.price);
+  let status = "";
+  if (isMoney) status = names.length ? `<div class="badge">✓ Chipped in: ${esc(names.join(", "))}</div>` : "";
+  else if (w.qty > 1) status = `<div class="progress">${w.claims.length} of ${w.qty} taken${names.length ? " · " + esc(names.join(", ")) : ""}</div>`;
+  else if (names.length) status = `<div class="badge">✓ Taken by ${esc(names.join(", "))}</div>`;
+  let btns = "";
+  if (isMoney) btns += `<button class="btn" onclick="chipIn(${w.row},this)" data-label="${esc(w.item)}">I'll chip in</button>`;
+  else if (!full) btns += `<button class="btn" onclick="claim('wishlist',${w.row},this)" data-label="${esc(w.item)}">I'll get ${w.qty > 1 && !w.claims.length ? "one" : "this"}</button>`;
+  if (mine.length && !isMoney) {
+    const got = mine.every(c => c.bought);
+    btns += `<button class="btn small ${got ? "done" : "ghost"}" onclick="toggleBought(${w.row})">${got ? "✓ Bought" : "Mark bought"}</button>`;
+  }
+  if (mine.length) btns += `<button class="btn small ghost" onclick="unclaim('wishlist',${w.row},this)" data-label="${esc(w.item)}">Undo</button>`;
+  return `<div class="card ${full ? "taken" : ""} ${isMoney ? "money" : ""}"><div class="body"><h3>${esc(w.item)}</h3>
+    ${w.notes ? `<div class="meta">${esc(w.notes)}</div>` : ""}
+    ${w.size ? `<span class="size">Size ${esc(w.size)}</span>` : ""}
+    ${link ? `<div><a class="price" href="${esc(link)}" target="_blank" rel="noopener">See an example${price ? " · " + price : ""} ↗</a></div>` : price ? `<div class="price">About ${price}</div>` : ""}
+    ${status}</div><div class="btns">${btns}</div></div>`;
 }
 
-function claimBtn(list, row, label, who) {
-  const mine = who && who.trim().toLowerCase() === myName().toLowerCase();
+function singleBtn(list, row, label, who) {
   if (free(who)) return `<button class="btn" onclick="claim('${list}',${row},this)" data-label="${esc(label)}">I'll get this</button>`;
-  if (mine) return `<button class="btn ghost" onclick="unclaim('${list}',${row},this)" data-label="${esc(label)}">Undo</button>`;
+  if (isMe(who)) return `<button class="btn ghost" onclick="unclaim('${list}',${row},this)" data-label="${esc(label)}">Undo</button>`;
   return "";
 }
 
 function render() {
+  if (!data) return;
   const days = Math.max(0, Math.ceil((new Date(2026, 11, 25) - new Date()) / 864e5));
   $("#t-days").textContent = days;
-  const gFree = data.wishlist.filter(w => free(w.by)).length;
-  $("#t-gifts").textContent = gFree;
-  const fFree = data.menu.filter(m => free(m.buys)).length + data.bring.filter(b => free(b.who)).length;
-  $("#t-food").textContent = fFree;
+  const gifts = data.wishlist.filter(w => w.type !== "money");
+  $("#t-gifts").textContent = gifts.filter(wishFree).length;
+  $("#t-taken").textContent = gifts.filter(w => !wishFree(w)).length;
+  $("#t-food").textContent = data.menu.filter(m => free(m.buys)).length + data.bring.filter(b => free(b.who)).length;
 
-  // wishlist
-  $("#wish-count").textContent = `${data.wishlist.length - gFree} of ${data.wishlist.length} taken`;
-  let html = "", cats = [...new Set(data.wishlist.map(w => w.category))];
-  cats.forEach(c => {
-    let items = data.wishlist.filter(w => w.category === c)
-      .filter(w => filter === "all" || (filter === "free") === free(w.by))
-      .sort((a, b) => free(b.by) - free(a.by));
+  $("#wish-count").textContent = `${gifts.filter(w => !wishFree(w)).length} of ${gifts.length} taken`;
+  let html = "";
+  [...new Set(data.wishlist.map(w => w.category))].forEach(c => {
+    const items = data.wishlist.filter(w => w.category === c).filter(w =>
+      filter === "all" ? true : filter === "free" ? (wishFree(w) || w.type === "money") :
+      filter === "taken" ? (!wishFree(w) && w.type !== "money") : w.claims.some(x => isMe(x.name)))
+      .sort((a, b) => wishFree(b) - wishFree(a));
     if (!items.length) return;
-    html += `<div class="cat">${esc(c)}</div>`;
-    items.forEach(w => {
-      html += `<div class="card ${free(w.by) ? "" : "taken"}"><div class="body"><h3>${esc(w.item)}</h3>
-        ${w.notes ? `<div class="meta">${esc(w.notes)}</div>` : ""}
-        ${w.size ? `<span class="size">Size ${esc(w.size)}</span>` : ""}
-        ${free(w.by) ? "" : `<div class="badge">✓ Taken by ${esc(w.by)}</div>`}</div>
-        ${claimBtn("wishlist", w.row, w.item, w.by)}</div>`;
-    });
+    html += `<div class="cat">${esc(c)}</div>` + items.map(wishCard).join("");
   });
-  $("#wish-list").innerHTML = html || `<div class="empty">Nothing here</div>`;
+  $("#wish-list").innerHTML = html || `<div class="empty">${filter === "mine" ? "Nothing with your name on yet" : "Nothing here"}</div>`;
 
-  // menu
   $("#food-count").textContent = `${data.menu.length} dishes`;
-  html = ""; [...new Set(data.menu.map(m => m.course))].forEach(c => {
+  html = "";
+  [...new Set(data.menu.map(m => m.course))].forEach(c => {
     html += `<div class="cat">${esc(c)}</div>`;
     data.menu.filter(m => m.course === c).forEach(m => {
       const f = free(m.buys);
       const who = [m.buys && !f ? m.buys : "", m.cooks && m.cooks !== "TBC" && m.cooks !== m.buys ? "Cooking: " + m.cooks : ""].filter(Boolean).join(" · ");
       html += `<div class="card"><div class="body"><h3>${esc(m.dish)}</h3>
         ${who ? `<div class="meta">${esc(who)}</div>` : ""}${m.notes ? `<div class="meta">${esc(m.notes)}</div>` : ""}
-        ${f ? `<span class="needs">Needs someone</span>` : ""}</div>${claimBtn("menu", m.row, m.dish, m.buys)}</div>`;
+        ${f ? `<span class="needs">Needs someone</span>` : ""}</div>${singleBtn("menu", m.row, m.dish, m.buys)}</div>`;
     });
   });
   $("#menu-list").innerHTML = html;
   $("#bring-list").innerHTML = data.bring.map(b => `<div class="card ${free(b.who) ? "" : "taken"}"><div class="body"><h3>${esc(b.item)}${b.qty > 1 ? " ×" + esc(b.qty) : ""}</h3>
-    ${free(b.who) ? `<span class="needs">Needs someone</span>` : `<div class="badge">✓ ${esc(b.who)}</div>`}</div>${claimBtn("bring", b.row, b.item, b.who)}</div>`).join("");
+    ${free(b.who) ? `<span class="needs">Needs someone</span>` : `<div class="badge">✓ ${esc(b.who)}</div>`}</div>${singleBtn("bring", b.row, b.item, b.who)}</div>`).join("");
 
-  // plan
   const ev = s => `<div class="ev"><div class="when">${esc(s.day)}${s.when ? " · " + esc(s.when) : ""}</div><div class="what">${esc(s.what)}</div>${s.notes ? `<div class="meta">${esc(s.notes)}</div>` : ""}</div>`;
   $("#plan-list").innerHTML = data.schedule.map(ev).join("");
   $("#home-next").innerHTML = `<div class="timeline">${data.schedule.slice(0, 3).map(ev).join("")}</div>`;
 }
 
-function askName(title, extra, onOk) {
+function openDialog(title, opts, onOk) {
   const f = $("#dlg-form");
-  f.innerHTML = `<h3>${title}</h3>${extra.intro || ""}<label>Your first name</label><input id="f-name" value="${esc(myName())}" required maxlength="40">${extra.fields || ""}
-    <div class="row"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="ok">${extra.ok || "Confirm"}</button></div>`;
-  const d = $("#dlg"); d.showModal();
+  f.innerHTML = `<h3>${title}</h3>${opts.intro || ""}<label>Your first name</label><input id="f-name" value="${esc(myName())}" required maxlength="40">${opts.fields || ""}
+    <div class="row"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="ok">${opts.ok || "Confirm"}</button></div>`;
+  const d = $("#dlg"); d.returnValue = ""; d.showModal();
   d.onclose = async () => {
     if (d.returnValue !== "ok") return;
     const n = $("#f-name").value.trim(); if (!n) return;
-    setName(n); await onOk(n);
+    store.set("xmasName", n);
+    try { await onOk(n); } catch (e) { toast("That didn't save, please try again"); }
   };
 }
 
 function claim(list, row, el) {
   const label = el.dataset.label;
-  askName(`Taking: ${esc(label)}`, { ok: "It's mine" }, async name => {
+  openDialog(`Taking: ${esc(label)}`, { ok: "It's mine" }, async name => {
     const r = await send({ action: "claim", list, row, label, name });
-    toast(r.ok ? "Done, it's yours" : r.error);
+    toast(r.ok ? "Done, it's on your list" : r.error);
   });
+}
+function chipIn(row, el) {
+  const label = el.dataset.label;
+  openDialog("Chip in", { ok: "Count me in", intro: `<div class="meta">Only Maria sees amounts. Ask her for transfer details.</div>`,
+    fields: `<label>Amount £ (optional)</label><input id="f-amount" type="number" min="0" max="1000" step="1" inputmode="numeric">` },
+    async name => { const r = await send({ action: "claim", list: "wishlist", row, label, name, amount: $("#f-amount").value }); toast(r.ok ? "Thank you!" : r.error); });
 }
 async function unclaim(list, row, el) {
   const r = await send({ action: "unclaim", list, row, label: el.dataset.label, name: myName() });
   toast(r.ok ? "Removed your name" : r.error);
 }
+async function toggleBought(row) {
+  const r = await send({ action: "bought", row, name: myName() });
+  toast(r.ok ? "Updated" : r.error);
+}
 function openSuggest() {
-  askName("Suggest a gift", { ok: "Add it", fields: `<label>Gift</label><input id="f-item" required maxlength="80"><label>Size (if clothes or shoes)</label><input id="f-size" maxlength="40"><label>Notes or link</label><input id="f-notes" maxlength="200">` },
-    async name => { const r = await send({ action: "suggest", name, item: $("#f-item").value, size: $("#f-size").value, notes: $("#f-notes").value }); toast(r.ok ? "Added to the list" : r.error); });
+  openDialog("Suggest a gift", { ok: "Add it", fields: `<label>Gift</label><input id="f-item" required maxlength="80"><label>Size (if clothes or shoes)</label><input id="f-size" maxlength="40"><label>Link (optional)</label><input id="f-link" type="url" maxlength="300"><label>Notes</label><input id="f-notes" maxlength="200">` },
+    async name => { const r = await send({ action: "suggest", name, item: $("#f-item").value, size: $("#f-size").value, link: $("#f-link").value, notes: $("#f-notes").value }); toast(r.ok ? "Added to the list" : r.error); });
 }
 
-document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => {
-  document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("on", x === b));
-  document.querySelectorAll("section.view").forEach(s => s.classList.toggle("on", s.id === "v-" + b.dataset.v));
-  $("#fab").hidden = b.dataset.v !== "wish"; window.scrollTo(0, 0);
-});
+function show(v) {
+  document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("on", x.dataset.v === v));
+  document.querySelectorAll("section.view").forEach(s => s.classList.toggle("on", s.id === "v-" + v));
+  $("#fab").hidden = v !== "wish"; window.scrollTo(0, 0);
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => show(b.dataset.v));
 document.querySelectorAll("#wish-filters .chip").forEach(c => c.onclick = () => {
   filter = c.dataset.f; document.querySelectorAll("#wish-filters .chip").forEach(x => x.classList.toggle("on", x === c)); render();
 });
+
+if (FRIENDS) {
+  document.documentElement.classList.add("friends");
+  document.querySelector(".friends-only").hidden = false;
+  $("#hero-dates").textContent = "Christmas 2026";
+  $("#hero-title").textContent = "The boys' wishlist";
+  $("#hero-text").textContent = "Pick a gift and add your name so nobody doubles up. Thank you!";
+  show("wish");
+}
+const cached = store.get(CACHE_KEY);
+if (cached) { try { data = JSON.parse(cached); render(); } catch (e) {} }
 load();
 if (API_URL) setInterval(load, 60000);
 </script>
