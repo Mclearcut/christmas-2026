@@ -147,7 +147,7 @@ const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("
 async function load() {
   if (!API_URL) { $("#demo").hidden = false; data = JSON.parse(JSON.stringify(DEMO)); render(); return; }
   try {
-    const r = await fetch(API_URL); data = await r.json(); render();
+    const r = await fetch(API_URL); const d = await r.json(); if (!d.wishlist) { toast(d.error || "Couldn't load the list"); return; } data = d; render();
   } catch (e) { toast("Couldn't load the list, please refresh"); }
 }
 
