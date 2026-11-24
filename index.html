@@ -149,7 +149,7 @@ const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("
 const safeLink = u => /^https?:\/\//i.test(String(u || "")) ? u : "";
 const money = p => { const n = Number(String(p).replace(/[£,]/g, "")); return n ? "£" + (n % 1 ? n.toFixed(2) : n) : ""; };
 
-function setData(d) { data = d; store.set(CACHE_KEY, JSON.stringify(d)); render(); }
+function setData(d) { (d.wishlist || []).forEach(w => { w.claims = w.claims || (w.by ? String(w.by).split(",").map(n => ({ name: n.trim(), bought: false })) : []); w.qty = w.qty || 1; }); data = d; store.set(CACHE_KEY, JSON.stringify(d)); render(); }
 
 async function load() {
   if (!API_URL) { $("#demo").hidden = false; return; }
